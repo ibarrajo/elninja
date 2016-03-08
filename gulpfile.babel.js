@@ -4,11 +4,13 @@ import gulpLoadPlugins from 'gulp-load-plugins';
 import browserSync from 'browser-sync';
 import del from 'del';
 import {stream as wiredep} from 'wiredep';
+import less from 'gulp-less';
+
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
 
-gulp.task('styles', () => {
+gulp.task('scss-styles', () => {
   return gulp.src('app/styles/*.scss')
     .pipe($.plumber())
     .pipe($.sourcemaps.init())
@@ -21,6 +23,19 @@ gulp.task('styles', () => {
     .pipe($.sourcemaps.write())
     .pipe(gulp.dest('.tmp/styles'))
     .pipe(reload({stream: true}));
+});
+
+gulp.task('less-styles', function () {
+  return gulp.src('app/styles/*.less')
+    .pipe(less().on('error', function (err) {
+     console.log(err);
+  }))
+  .pipe(cssmin().on('error', function(err) {
+    console.log(err);
+  }))
+  .pipe(rename({suffix: '.min'}))
+  .pipe(gulp.dest('.tmp/styles'));
+
 });
 
 gulp.task('scripts', () => {
@@ -51,7 +66,7 @@ const testLintOptions = {
 gulp.task('lint', lint('app/scripts/**/*.js'));
 gulp.task('lint:test', lint('test/spec/**/*.js', testLintOptions));
 
-gulp.task('html', ['styles', 'scripts'], () => {
+gulp.task('html', ['less-styles', 'scss-styles', 'scripts'], () => {
   return gulp.src('app/*.html')
     .pipe($.useref({searchPath: ['.tmp', 'app', '.']}))
     .pipe($.if('*.js', $.uglify()))
@@ -90,7 +105,7 @@ gulp.task('extras', () => {
 
 gulp.task('clean', del.bind(null, ['.tmp', 'dist']));
 
-gulp.task('serve', ['styles', 'scripts', 'fonts'], () => {
+gulp.task('serve', ['less-styles', 'scss-styles', 'scripts', 'fonts'], () => {
   browserSync({
     notify: false,
     port: 9000,
@@ -108,7 +123,7 @@ gulp.task('serve', ['styles', 'scripts', 'fonts'], () => {
     '.tmp/fonts/**/*'
   ]).on('change', reload);
 
-  gulp.watch('app/styles/**/*.scss', ['styles']);
+  gulp.watch(['app/styles/**/*.less','app/styles/**/*.scss'], ['less-styles', 'scss-styles']);
   gulp.watch('app/scripts/**/*.js', ['scripts']);
   gulp.watch('app/fonts/**/*', ['fonts']);
   gulp.watch('bower.json', ['wiredep', 'fonts']);
