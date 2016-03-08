@@ -5,7 +5,7 @@ import browserSync from 'browser-sync';
 import del from 'del';
 import {stream as wiredep} from 'wiredep';
 import less from 'gulp-less';
-
+import cssmin from 'gulp-cssmin';
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
@@ -33,7 +33,6 @@ gulp.task('less-styles', function () {
   .pipe(cssmin().on('error', function(err) {
     console.log(err);
   }))
-  .pipe(rename({suffix: '.min'}))
   .pipe(gulp.dest('.tmp/styles'));
 
 });
@@ -165,6 +164,12 @@ gulp.task('wiredep', () => {
       ignorePath: /^(\.\.\/)+/
     }))
     .pipe(gulp.dest('app/styles'));
+
+    gulp.src('app/styles/*.less')
+      .pipe(wiredep({
+        ignorePath: /^(\.\.\/)+/
+      }))
+      .pipe(gulp.dest('app/styles'));
 
   gulp.src('app/*.html')
     .pipe(wiredep({
